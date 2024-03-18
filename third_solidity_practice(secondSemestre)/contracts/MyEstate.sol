@@ -37,15 +37,6 @@ contract MyEstate {
 
     mapping(address=>uint) private  balances;
 
-    event estateCreated(address _owner, uint _idAstate, uint _dateTime, titeOfEstate _esType);
-    event adCreated(address _owner, uint _idEstate, uint _idAd, uint _dateTime, uint _price);
-    event estateStatusChanged(address _owner, uint _idEstate, uint _dateTime, bool _isActive);
-    event adStatusChanged(address _owner, uint _idEstate, uint idAd, uint _dateTime, status _adStatus);
-    event fundsBack(address _to, uint _value, uint _dateTime);
-    event estatePurchased(address _owner, address _buyer, uint _idAd, uint _idEstate, status _adStatus, uint _dateTime, uint _price);
-    event fundsBack(address _from, uint _amount);
-    event Payd(address _from, uint _amount);
-
     modifier onlyEstateOwner(uint idEstate) {
         require(estate[idEstate].owner == msg.sender, "you must be a estate owner");
         _;
@@ -76,16 +67,23 @@ contract MyEstate {
         _;
     }
 
+    event estateCreated(address _owner, uint _idAstate, uint _dateTime, titeOfEstate _esType);
+
     function cretaeEstate(uint size, string memory estateAddress, titeOfEstate estype) public {
         require(size > 1, "size should be bigger 1");
         estate.push(Estate(size, estateAddress, msg.sender, estype, true, estate.length + 1));
         emit estateCreated(msg.sender, estate.length + 1, block.timestamp, estype);
     }
 
+    event adCreated(address _owner, uint _idEstate, uint _idAd, uint _dateTime, uint _price);
+
     function createAd(uint price, uint idEstate) public onlyEstateOwner(idEstate) isEstateExist(idEstate) isActiveEstate(idEstate) {
         ads.push(Advertisement(msg.sender, address(0), price, idEstate, block.timestamp, status.opened));
         emit adCreated(msg.sender, idEstate, ads.length + 1, block.timestamp, price);
     }
+
+    event adStatusChanged(address _owner, uint _idEstate, uint idAd, uint _dateTime, status _adStatus);
+    event estateStatusChanged(address _owner, uint _idEstate, uint _dateTime, bool _isActive);
 
     function changeStatusEstate(uint idEstate) public onlyEstateOwner(idEstate) isEstateExist(idEstate) {
         estate[idEstate].status = false;
@@ -104,12 +102,16 @@ contract MyEstate {
         emit adStatusChanged(msg.sender, estateId, adId, block.timestamp, status.closed);
     }
 
+    event fundsBack(address _to, uint _value, uint _dateTime);
+
     function withDraw(uint value) public {
         require(balances[msg.sender] >= value, "value must be less than or equal to balance");
         payable(msg.sender).transfer(value);
         balances[msg.sender] -= value;
         emit fundsBack(msg.sender, value, block.timestamp);
     }
+
+    event estatePurchased(address _owner, address _buyer, uint _idAd, uint _idEstate, status _adStatus, uint _dateTime, uint _price);
 
     function buyEstate(uint adId) isClosedAd(adId) isAdExist(adId) public {
         require(balances[msg.sender] >= ads[adId].price, "not have enough money");
@@ -132,6 +134,8 @@ contract MyEstate {
     function getAds() public view returns(Advertisement[] memory) {
         return ads;
     }
+
+    event Payd(address _from, uint _amount);
 
     function pay() public payable {
         balances[msg.sender] += msg.value;
