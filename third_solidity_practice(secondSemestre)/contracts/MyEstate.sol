@@ -3,6 +3,7 @@ pragma solidity >=0.7.0 <0.9.0;
 
 
 contract MyEstate {
+
     enum titeOfEstate {
         house,
         flat,
@@ -97,9 +98,9 @@ contract MyEstate {
         }
     }
 
-    function changeStatusAd(uint adId, uint estateId) public onlyAdOwner(adId) isActiveEstate(estateId) isAdExist(adId){
+    function changeStatusAd(uint adId) public onlyAdOwner(adId) isActiveEstate(ads[adId].idEstate) isAdExist(adId){
         ads[adId].adStatus == status.closed;
-        emit adStatusChanged(msg.sender, estateId, adId, block.timestamp, status.closed);
+        emit adStatusChanged(msg.sender, ads[adId].idEstate, adId, block.timestamp, status.closed);
     }
 
     event fundsBack(address _to, uint _value, uint _dateTime);
@@ -115,6 +116,7 @@ contract MyEstate {
 
     function buyEstate(uint adId) isClosedAd(adId) isAdExist(adId) public {
         require(balances[msg.sender] >= ads[adId].price, "not have enough money");
+        require(msg.sender != ads[adId].owner, "You musnt be a owner");
         balances[msg.sender] -= ads[adId].price;
         balances[ads[adId].owner] += ads[adId].price;
         ads[adId].adStatus = status.closed;
